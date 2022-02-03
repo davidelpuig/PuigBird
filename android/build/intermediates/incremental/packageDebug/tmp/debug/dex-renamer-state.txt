@@ -1,0 +1,4 @@
+#Thu Feb 03 16:04:16 CET 2022
+base.0=/home/david/AndroidStudioProjects/Bird/android/build/intermediates/dex/debug/mergeDexDebug/out/classes.dex
+renamed.0=classes.dex
+path.0=classes.dex

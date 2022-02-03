@@ -1,0 +1,10 @@
+com/mygdx/drop/R.java
+ com.mygdx.drop.R
+ com.mygdx.drop.R$color
+ com.mygdx.drop.R$drawable
+ com.mygdx.drop.R$string
+ com.mygdx.drop.R$style
+com/mygdx/drop/BuildConfig.java
+ com.mygdx.drop.BuildConfig
+com/mygdx/drop/AndroidLauncher.java
+ com.mygdx.drop.AndroidLauncher

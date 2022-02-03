@@ -24,8 +24,8 @@ public class GameScreen implements Screen {
     Texture pipeDownImage;
     Texture pauseImage;
     Texture backgroundImage;
-    Sound dropSound;
-    Music rainMusic;
+    Sound flapSound;
+    Sound failSound;
     OrthographicCamera camera;
     Rectangle player;
     Rectangle pause;
@@ -41,19 +41,18 @@ public class GameScreen implements Screen {
     public GameScreen(final Bird gam) {
         this.game = gam;
 
-        // load the images for the droplet and the player, 64x64 pixels each
+        // load the images
         birdImage = new Texture(Gdx.files.internal("bird.png"));
         pipeUpImage = new Texture(Gdx.files.internal("pipe_up.png"));
         pipeDownImage = new Texture(Gdx.files.internal("pipe_down.png"));
         pauseImage = new Texture(Gdx.files.internal("pause.png"));
         backgroundImage = new Texture(Gdx.files.internal("background.png"));
 
-
-
         // load the drop sound effect and the rain background "music"
-        dropSound = Gdx.audio.newSound(Gdx.files.internal("drop.wav"));
-        rainMusic = Gdx.audio.newMusic(Gdx.files.internal("rain.mp3"));
-        rainMusic.setLooping(true);
+        flapSound = Gdx.audio.newSound(Gdx.files.internal("flap.wav"));
+        failSound = Gdx.audio.newSound(Gdx.files.internal("fail.wav"));
+        //rainMusic = Gdx.audio.newMusic(Gdx.files.internal("rain.mp3"));
+        //rainMusic.setLooping(true);
 
         // create the camera and the SpriteBatch
         camera = new OrthographicCamera();
@@ -61,8 +60,8 @@ public class GameScreen implements Screen {
 
         // create a Rectangle to logically represent the player
         player = new Rectangle();
-        player.x = 200; //800 / 2 - 64 / 2; // center the player horizontally
-        player.y = 480 / 2 - 64 / 2; //20; // bottom left corner of the player is 20 pixels above
+        player.x = 200; //800 / 2 - 64 / 2; // center the player vertically
+        player.y = 480 / 2 - 64 / 2;
         // the bottom screen edge
         player.width = 64;
         player.height = 45;
@@ -73,7 +72,7 @@ public class GameScreen implements Screen {
         pause.width = 64;
         pause.height = 64;
 
-        // create the obstacles array and spawn the first raindrop
+        // create the obstacles array and spawn the first obstacle
         obstacles = new Array<Rectangle>();
         spawnObstacle();
 
@@ -87,7 +86,11 @@ public class GameScreen implements Screen {
     }
 
     private void spawnObstacle() {
+
+        // Calcula la alçada de l¡obstacle aleatoriament
         float holey = MathUtils.random(50, 230);
+
+        // Crea dos obstacles: Una tuberoa superior i una inferior
         Rectangle pipe1 = new Rectangle();
         pipe1.x = 800;
         pipe1.y = holey - 230;
@@ -110,10 +113,7 @@ public class GameScreen implements Screen {
 
         boolean dead = false;
 
-        // clear the screen with a dark blue color. The
-        // arguments to clear are the red, green
-        // blue and alpha component in the range [0,1]
-        // of the color to be used to clear the screen.
+        // clear the screen with a color
         ScreenUtils.clear(0.3f, 0.8f, 0.8f, 1);
 
         // tell the camera to update its matrices.
@@ -124,13 +124,12 @@ public class GameScreen implements Screen {
         game.batch.setProjectionMatrix(camera.combined);
 
         // begin a new batch and draw the player and
-        // all drops
+        // all obstacles
         game.batch.begin();
         game.batch.draw(backgroundImage, 0, 0);
         game.batch.draw(birdImage, player.x, player.y);
-        /*for (Rectangle raindrop : obstacles) {
-            game.batch.draw(pipeUpImage, raindrop.x, raindrop.y);
-        }*/
+
+        // DIbuixa els obstacles: Els parells son tuberia inferior, els imparells tuberia superior
         for(int i = 0; i < obstacles.size; i++)
         {
                 game.batch.draw( i % 2 == 0 ? pipeUpImage : pipeDownImage, obstacles.get(i).x, obstacles.get(i).y);
@@ -151,8 +150,10 @@ public class GameScreen implements Screen {
                 // Pause game
                 if (pause.contains(touchPos.x, touchPos.y))
                     paused = true;
-                else
+                else {
                     speedy = 400f;
+                    flapSound.play();
+                }
             }
             else
             {
@@ -162,33 +163,35 @@ public class GameScreen implements Screen {
 
         if(!paused)
         {
+            //Actualitza la posició del jugador amb la velocitat vertical
             player.y += speedy * Gdx.graphics.getDeltaTime();
 
+            //Actualitza la velocitat vertical amb la gravetat
             speedy -= gravity * Gdx.graphics.getDeltaTime();
 
+            //La puntuació augmenta amb el temps de joc
             score += Gdx.graphics.getDeltaTime();
 
             /*if (Gdx.input.isKeyPressed(Keys.LEFT))
                 player.x -= 200 * Gdx.graphics.getDeltaTime();
             if (Gdx.input.isKeyPressed(Keys.RIGHT))
                 player.x += 200 * Gdx.graphics.getDeltaTime();
-    */
-            // make sure the player stays within the screen bounds
+            */
+
+            // Comprova que el jugador no es surt de la pantalla.
+            // Si surt per la part inferior, game over
             if (player.y > 480 - 45)
                 player.y = 480 - 45;
             if (player.y < 0 - 45) {
                 dead = true;
             }
-            /*if (player.x > 800 - 64)
-                player.x = 800 - 64;*/
 
-            // check if we need to create a new raindrop
+            // Comprova si cal generar un obstacle nou
             if (TimeUtils.nanoTime() - lastObstacleTime > 1500000000)
                 spawnObstacle();
 
-            // move the obstacles, remove any that are beneath the bottom edge of
-            // the screen or that hit the player. In the later case we play back
-            // a sound effect as well.
+            // Mou els obstacles. Elimina els que estan fora de la pantalla
+            // Comprova si el jugador colisiona amb un obstacle, llavors game over
             Iterator<Rectangle> iter = obstacles.iterator();
             while (iter.hasNext()) {
                 Rectangle raindrop = iter.next();
@@ -202,7 +205,7 @@ public class GameScreen implements Screen {
 
             if(dead)
             {
-                dropSound.play();
+                failSound.play();
                 game.lastScore = (int)score;
                 if(game.lastScore > game.topScore)
                     game.topScore = game.lastScore;
@@ -220,7 +223,7 @@ public class GameScreen implements Screen {
     public void show() {
         // start the playback of the background music
         // when the screen is shown
-        rainMusic.play();
+        //rainMusic.play();
     }
 
     @Override
@@ -240,8 +243,8 @@ public class GameScreen implements Screen {
         birdImage.dispose();
         pipeUpImage.dispose();
         pipeDownImage.dispose();
-        dropSound.dispose();
-        rainMusic.dispose();
+        failSound.dispose();
+        flapSound.dispose();
     }
 
 }

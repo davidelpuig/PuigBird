@@ -1,0 +1,8 @@
+com/mygdx/drop/Bird.java
+ com.mygdx.drop.Bird
+com/mygdx/drop/GameOverScreen.java
+ com.mygdx.drop.GameOverScreen
+com/mygdx/drop/GameScreen.java
+ com.mygdx.drop.GameScreen
+com/mygdx/drop/MainMenuScreen.java
+ com.mygdx.drop.MainMenuScreen
